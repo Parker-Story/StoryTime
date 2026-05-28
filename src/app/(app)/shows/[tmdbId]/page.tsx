@@ -43,7 +43,7 @@ export default async function ShowDetailPage({
   if (!show) notFound()
 
   // Run queries in parallel
-  const [userInteractionResult, friendReviewsResult, communityRatingResult] =
+  const [userInteractionResult, allReviewsResult, communityRatingResult, friendsResult] =
     await Promise.all([
       user
         ? supabase
@@ -61,7 +61,7 @@ export default async function ShowDetailPage({
             .eq('show_id', tmdbId)
             .not('review_body', 'is', null)
             .neq('user_id', user.id)
-            .limit(20)
+            .limit(40)
         : Promise.resolve({ data: [] }),
 
       supabase
@@ -69,11 +69,27 @@ export default async function ShowDetailPage({
         .select('rating')
         .eq('show_id', tmdbId)
         .not('rating', 'is', null),
+
+      user
+        ? supabase
+            .from('friendships')
+            .select('requester_id, addressee_id')
+            .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+            .eq('status', 'accepted')
+        : Promise.resolve({ data: [] }),
     ])
 
   const userInteraction = userInteractionResult.data as ShowInteraction | null
-  const friendReviews = (friendReviewsResult.data ?? []) as ReviewWithProfile[]
+  const allReviews = (allReviewsResult.data ?? []) as ReviewWithProfile[]
   const allRatings = (communityRatingResult.data ?? []) as { rating: number | null }[]
+
+  const friendIds = new Set(
+    ((friendsResult.data ?? []) as { requester_id: string; addressee_id: string }[]).map((f) =>
+      f.requester_id === user?.id ? f.addressee_id : f.requester_id
+    )
+  )
+  const friendReviews = allReviews.filter((r) => friendIds.has(r.user_id))
+  const otherReviews = allReviews.filter((r) => !friendIds.has(r.user_id))
   const communityAvg =
     allRatings.length > 0
       ? allRatings.reduce((sum, r) => sum + (r.rating ?? 0), 0) / allRatings.length
@@ -191,24 +207,59 @@ export default async function ShowDetailPage({
       </div>
 
       {/* Reviews */}
-      {friendReviews.length > 0 && (
-        <div className="space-y-4">
+      {(friendReviews.length > 0 || otherReviews.length > 0) && (
+        <div className="space-y-6">
           <h2 className="text-xl font-semibold">Reviews</h2>
-          <div className="grid gap-4">
-            {friendReviews.map((review) => (
-              <ReviewCard
-                key={review.id}
-                username={review.profiles.username}
-                avatarUrl={review.profiles.avatar_url}
-                rating={review.rating}
-                reviewBody={review.review_body!}
-                containsSpoilers={review.review_contains_spoilers}
-                updatedAt={review.updated_at}
-                currentUserId={user?.id}
-                reviewUserId={review.user_id}
-              />
-            ))}
-          </div>
+
+          {friendReviews.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-primary">From Friends</span>
+                <div className="flex-1 h-px bg-primary/30" />
+              </div>
+              <div className="grid gap-4">
+                {friendReviews.map((review) => (
+                  <ReviewCard
+                    key={review.id}
+                    username={review.profiles.username}
+                    avatarUrl={review.profiles.avatar_url}
+                    rating={review.rating}
+                    reviewBody={review.review_body!}
+                    containsSpoilers={review.review_contains_spoilers}
+                    updatedAt={review.updated_at}
+                    currentUserId={user?.id}
+                    reviewUserId={review.user_id}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {otherReviews.length > 0 && (
+            <div className="space-y-4">
+              {friendReviews.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-muted-foreground">Other Reviews</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+              )}
+              <div className="grid gap-4">
+                {otherReviews.map((review) => (
+                  <ReviewCard
+                    key={review.id}
+                    username={review.profiles.username}
+                    avatarUrl={review.profiles.avatar_url}
+                    rating={review.rating}
+                    reviewBody={review.review_body!}
+                    containsSpoilers={review.review_contains_spoilers}
+                    updatedAt={review.updated_at}
+                    currentUserId={user?.id}
+                    reviewUserId={review.user_id}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

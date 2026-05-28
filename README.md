@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StoryTime
 
-## Getting Started
+A social TV tracking app. Log shows you're watching, rate episodes, write reviews, and follow what your friends are watching.
 
-First, run the development server:
+**[storytime.app](https://storytime.app)** — sign up and start tracking.
+
+---
+
+## What it does
+
+- Track shows by status: Watching, Finished, Want to Watch, or Dropped
+- Rate shows and write reviews (with optional spoiler tagging)
+- Mark individual episodes as watched with per-episode ratings and notes
+- See what your friends are watching and what they thought
+- Friend reviews are surfaced first on each show's page
+- Discover new shows through trending, top rated, and currently airing sections
+
+## Stack
+
+**Frontend**
+- [Next.js 16](https://nextjs.org/) (App Router) + [React 19](https://react.dev/)
+- [Tailwind CSS v4](https://tailwindcss.com/) — CSS-native theming via custom properties
+- [shadcn/ui](https://ui.shadcn.com/) components built on [@base-ui/react](https://base-ui.com/)
+- [next-themes](https://github.com/pacocoursey/next-themes) for dark/light mode with system preference default
+
+**Backend**
+- [Supabase](https://supabase.com/) — PostgreSQL database, auth, and file storage
+- Row-level security policies on every table
+- Next.js Server Actions for all mutations — no separate API layer
+
+**Data**
+- [TMDB API](https://developer.themoviedb.org/) for show metadata, posters, and episode info
+- Show data is cached in the database on first access and refreshed periodically
+
+**Deployment**
+- [Vercel](https://vercel.com/)
+
+## Why this stack
+
+Next.js App Router lets data fetching live right next to the components that need it, and Server Components mean most pages ship no client JS by default. Supabase handles auth and the database together without needing a separate backend. Tailwind v4's CSS-first approach makes theming clean — the whole palette is a handful of CSS custom properties that swap between light and dark mode. TMDB has a solid free tier and good TV coverage.
+
+## Running locally
 
 ```bash
+npm install
+cp .env.example .env.local
+# Fill in NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and TMDB_API_KEY
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open [http://localhost:3000](http://localhost:3000).

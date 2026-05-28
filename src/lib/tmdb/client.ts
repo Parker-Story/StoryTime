@@ -44,6 +44,18 @@ export async function getTrendingShows(): Promise<TMDBTrendingResponse> {
   } as RequestInit)
 }
 
+export async function getTopRatedShows(): Promise<TMDBTrendingResponse> {
+  return tmdbFetch('/tv/top_rated', {
+    next: { revalidate: 86400 },
+  } as RequestInit)
+}
+
+export async function getOnTheAirShows(): Promise<TMDBTrendingResponse> {
+  return tmdbFetch('/tv/on_the_air', {
+    next: { revalidate: 3600 },
+  } as RequestInit)
+}
+
 export async function getShowDetails(tmdbId: number): Promise<TMDBShowDetail> {
   return tmdbFetch(`/tv/${tmdbId}`)
 }
